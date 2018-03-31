@@ -1,175 +1,175 @@
 package websocket
 
 import (
-	"io"
-	"net"
-	"net/http"
-	"sync"
-	"time"
+    "io"
+    "net"
+    "net/http"
+    "sync"
+    "time"
 
-	"github.com/gorilla/websocket"
+    "github.com/gorilla/websocket"
 )
 
 type websocketConn interface {
-	NextReader() (messageType int, r io.Reader, err error)
-	NextWriter(messageType int) (io.WriteCloser, error)
-	Close() error
-	LocalAddr() net.Addr
-	RemoteAddr() net.Addr
-	SetReadDeadline(t time.Time) error
-	SetWriteDeadline(t time.Time) error
-	SetCloseHandler(h func(code int, text string) error)
+    NextReader() (messageType int, r io.Reader, err error)
+    NextWriter(messageType int) (io.WriteCloser, error)
+    Close() error
+    LocalAddr() net.Addr
+    RemoteAddr() net.Addr
+    SetReadDeadline(t time.Time) error
+    SetWriteDeadline(t time.Time) error
+    SetCloseHandler(h func(code int, text string) error)
 }
 
 // websocketConn represents a websocket connection.
 type websocketTransport struct {
-	sync.Mutex
-	socket  websocketConn
-	reader  io.Reader
-	closing chan bool
+    sync.Mutex
+    socket  websocketConn
+    reader  io.Reader
+    closing chan bool
 }
 
 const (
-	writeWait        = 10 * time.Second    // Time allowed to write a message to the peer.
-	pongWait         = 60 * time.Second    // Time allowed to read the next pong message from the peer.
-	pingPeriod       = (pongWait * 9) / 10 // Send pings to peer with this period. Must be less than pongWait.
-	closeGracePeriod = 10 * time.Second    // Time to wait before force close on connection.
+    writeWait        = 10 * time.Second    // Time allowed to write a message to the peer.
+    pongWait         = 60 * time.Second    // Time allowed to read the next pong message from the peer.
+    pingPeriod       = (pongWait * 9) / 10 // Send pings to peer with this period. Must be less than pongWait.
+    closeGracePeriod = 10 * time.Second    // Time to wait before force close on connection.
 )
 
 // The default upgrader to use
 var upgrader = &websocket.Upgrader{
-	Subprotocols: []string{"mqttv3.1", "mqttv3", "mqttv3"},
-	CheckOrigin:  func(r *http.Request) bool { return true },
+    Subprotocols: []string{"mqttv3.1", "mqttv3", "mqttv3"},
+    CheckOrigin:  func(r *http.Request) bool { return true },
 }
 
 // TryUpgrade attempts to upgrade an HTTP request to mqtt over websocket.
 func TryUpgrade(w http.ResponseWriter, r *http.Request) (*websocketTransport, bool) {
-	if w == nil || r == nil {
-		return nil, false
-	}
+    if w == nil || r == nil {
+        return nil, false
+    }
 
-	if ws, err := upgrader.Upgrade(w, r, nil); err == nil {
-		return newWebsocketConn(ws), true
-	}
+    if ws, err := upgrader.Upgrade(w, r, nil); err == nil {
+        return newWebsocketConn(ws), true
+    }
 
-	return nil, false
+    return nil, false
 }
 
 // newWebsocketConn creates a new transport from websocket.
 func newWebsocketConn(ws websocketConn) *websocketTransport {
-	conn := &websocketTransport{
-		socket:  ws,
-		closing: make(chan bool),
-	}
+    conn := &websocketTransport{
+        socket:  ws,
+        closing: make(chan bool),
+    }
 
-	ws.SetCloseHandler(func(code int, text string) error {
-		conn.closing <- true;
-		return conn.Close()
-	})
+    ws.SetCloseHandler(func(code int, text string) error {
+        conn.closing <- true;
+        return conn.Close()
+    })
 
-	/*ws.SetReadLimit(maxMessageSize)
-	ws.SetReadDeadline(time.Now().Add(pongWait))
-	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	ws.SetCloseHandler(func(code int, text string) error {
-		return conn.Close()
-	})
-	utils.Repeat(func() {
-		log.Println("ping")
-		if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-			log.Println("ping:", err)
-		}
-	}, pingPeriod, conn.closing)*/
+    /*ws.SetReadLimit(maxMessageSize)
+    ws.SetReadDeadline(time.Now().Add(pongWait))
+    ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+    ws.SetCloseHandler(func(code int, text string) error {
+        return conn.Close()
+    })
+    utils.Repeat(func() {
+        log.Println("ping")
+        if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+            log.Println("ping:", err)
+        }
+    }, pingPeriod, conn.closing)*/
 
-	return conn
+    return conn
 }
 
 // Read reads data from the connection. It is possible to allow reader to time
 // out and return a Error with Timeout() == true after a fixed time limit by
 // using SetDeadline and SetReadDeadline on the websocket.
 func (c *websocketTransport) Read(b []byte) (n int, err error) {
-	var opCode int
-	if c.reader == nil {
-		// New message
-		var r io.Reader
-		for {
-			if opCode, r, err = c.socket.NextReader(); err != nil {
-				return
-			}
+    var opCode int
+    if c.reader == nil {
+        // New message
+        var r io.Reader
+        for {
+            if opCode, r, err = c.socket.NextReader(); err != nil {
+                return
+            }
 
-			if opCode != websocket.BinaryMessage && opCode != websocket.TextMessage {
-				continue
-			}
+            if opCode != websocket.BinaryMessage && opCode != websocket.TextMessage {
+                continue
+            }
 
-			c.reader = r
-			break
-		}
-	}
+            c.reader = r
+            break
+        }
+    }
 
-	// Read from the reader
-	n, err = c.reader.Read(b)
-	if err != nil {
-		if err == io.EOF {
-			c.reader = nil
-			err = nil
-		}
-	}
-	return
+    // Read from the reader
+    n, err = c.reader.Read(b)
+    if err != nil {
+        if err == io.EOF {
+            c.reader = nil
+            err = nil
+        }
+    }
+    return
 }
 
 // Write writes data to the connection. It is possible to allow writer to time
 // out and return a Error with Timeout() == true after a fixed time limit by
 // using SetDeadline and SetWriteDeadline on the websocket.
 func (c *websocketTransport) Write(b []byte) (n int, err error) {
-	// Serialize write to avoid concurrent write
-	c.Lock()
-	defer c.Unlock()
+    // Serialize write to avoid concurrent write
+    c.Lock()
+    defer c.Unlock()
 
-	var w io.WriteCloser
-	if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
-		if n, err = w.Write(b); err == nil {
-			err = w.Close()
-		}
-	}
-	return
+    var w io.WriteCloser
+    if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
+        if n, err = w.Write(b); err == nil {
+            err = w.Close()
+        }
+    }
+    return
 }
 
 func(c *websocketTransport) Closing() <-chan bool{
-	return c.closing
+    return c.closing
 }
 
 // Close terminates the connection.
 func (c *websocketTransport) Close() error {
-	return c.socket.Close()
+    return c.socket.Close()
 }
 
 // LocalAddr returns the local network address.
 func (c *websocketTransport) LocalAddr() net.Addr {
-	return c.socket.LocalAddr()
+    return c.socket.LocalAddr()
 }
 
 // RemoteAddr returns the remote network address.
 func (c *websocketTransport) RemoteAddr() net.Addr {
-	return c.socket.RemoteAddr()
+    return c.socket.RemoteAddr()
 }
 
 // SetDeadline sets the read and write deadlines associated
 // with the connection. It is equivalent to calling both
 // SetReadDeadline and SetWriteDeadline.
 func (c *websocketTransport) SetDeadline(t time.Time) (err error) {
-	if err = c.socket.SetReadDeadline(t); err == nil {
-		err = c.socket.SetWriteDeadline(t)
-	}
-	return
+    if err = c.socket.SetReadDeadline(t); err == nil {
+        err = c.socket.SetWriteDeadline(t)
+    }
+    return
 }
 
 // SetReadDeadline sets the deadline for future Read calls
 // and any currently-blocked Read call.
 func (c *websocketTransport) SetReadDeadline(t time.Time) error {
-	return c.socket.SetReadDeadline(t)
+    return c.socket.SetReadDeadline(t)
 }
 
 // SetWriteDeadline sets the deadline for future Write calls
 // and any currently-blocked Write call.
 func (c *websocketTransport) SetWriteDeadline(t time.Time) error {
-	return c.socket.SetWriteDeadline(t)
+    return c.socket.SetWriteDeadline(t)
 }
