@@ -1,138 +1,225 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/gorilla/mux"
+	"github.com/numb3r3/jsmpeg-relay/pubsub"
+	"github.com/numb3r3/jsmpeg-relay/log"
+	"github.com/numb3r3/jsmpeg-relay/websocket"
 )
 
-var localAddr = flag.String("l", ":8080", "")
+//Broker default
+var broker = pubsub.NewBroker()
 
-var secret = flag.String("secret", "supersecret", "stream secret")
+// var newclients chan *WsClient
+// var bufCh chan []byte
 
-var wsComp = flag.Bool("wscomp", false, "ws compression")
-var verbosity = flag.Int("v", 3, "verbosity")
+// type WsClient struct {
+// 	*websocket.Conn
+// 	data chan []byte
+// }
 
-// The default upgrader to use
-var upgrader = &websocket.Upgrader{
-	EnableCompression: false,
-	CheckOrigin:  func(r *http.Request) bool { return true },
-}
+// func NewWsClient(c *websocket.Conn) *WsClient {
+// 	return &WsClient{c, make(chan []byte, 16)}
+// }
 
-var newclients chan *WsClient
-var bufCh chan []byte
+// func (c *WsClient) Send(buf []byte) {
+// 	select {
+// 	case <-c.data:
+// 	default:
+// 	}
+// 	c.data <- buf
+// }
 
-type WsClient struct {
-	*websocket.Conn
-	data chan []byte
-}
+// func (c *WsClient) worker() {
+// 	for {
+// 		buf := <-c.data
+// 		err := c.WriteMessage(websocket.BinaryMessage, buf)
+// 		if err != nil {
+// 			c.Close()
+// 			return
+// 		}
+// 	}
+// }
 
-func NewWsClient(c *websocket.Conn) *WsClient {
-	return &WsClient{c, make(chan []byte, 16)}
-}
+// func broacast() {
+// 	clients := make(map[*WsClient]*WsClient, 0)
 
-func (c *WsClient) Send(buf []byte) {
-	select {
-	case <-c.data:
-	default:
-	}
-	c.data <- buf
-}
+// 	for {
+// 		data := <-bufCh
+// 		for _, c := range clients {
+// 			c.Send(data)
+// 		}
+// 		for len(newclients) > 0 {
+// 			c := <-newclients
+// 			clients[c] = c
+// 			logging.Debug("[ws] [new client]", c.RemoteAddr())
+// 		}
+// 	}
+// }
 
-func (c *WsClient) worker() {
-	for {
-		buf := <-c.data
-		err := c.WriteMessage(websocket.BinaryMessage, buf)
-		if err != nil {
-			c.Close()
-			return
-		}
-	}
-}
+// func wsHandler(w http.ResponseWriter, r *http.Request) {
+// 	c, err := upgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		logging.Error("[ws] upgrade failed:", err)
+// 		return
+// 	}
+// 	defer c.Close()
 
-func broacast() {
-	clients := make(map[*WsClient]*WsClient, 0)
+// 	client := NewWsClient(c)
+// 	newclients <- client
 
-	for {
-		data := <-bufCh
-		for _, c := range clients {
-			c.Send(data)
-		}
-		for len(newclients) > 0 {
-			c := <-newclients
-			clients[c] = c
-			Vln(3, "[ws][new client]", c.RemoteAddr())
-		}
-	}
-}
+// 	client.worker()
+// }
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		Vln(2, "[ws]upgrade failed:", err)
-		return
-	}
-	defer c.Close()
+// func streamHandler(w http.ResponseWriter, r *http.Request) {
+// 	if r.Body != nil {
+// 		logging.Info("[stream] [new]", r.RemoteAddr)
 
-	client := NewWsClient(c)
-	newclients <- client
+// 		buf := make([]byte, 1024*1024)
+// 		for {
+// 			n, err := r.Body.Read(buf)
+// 			logging.Info("[stream][recv]", n, err)
+// 			if err != nil {
+// 				logging.Info("[stream][recv]err:", err)
+// 				return
+// 			}
+// 			bufCh <- buf[:n]
+// 		}
+// 	}
+// }
 
-	client.worker()
-}
-
-func streamHandler(w http.ResponseWriter, r *http.Request) {
+func publishHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	app_name := vars["app_name"]
+	stream_key := vars["stream_key"]
+	logging.Infof("publish stream %v / %v", app_name, stream_key)
 	if r.Body != nil {
-		Vln(3, "[stream][new]", r.RemoteAddr)
-
+		logging.Info("[stream] [new]", r.RemoteAddr)
 		buf := make([]byte, 1024*1024)
 		for {
 			n, err := r.Body.Read(buf)
-			Vln(5, "[stream][recv]", n, err)
+			logging.Info("[stream][recv]", n, err)
 			if err != nil {
-				Vln(2, "[stream][recv]err:", err)
+				logging.Error("[stream][recv] error:", err)
 				return
 			}
-			bufCh <- buf[:n]
+			broker.Broadcast(buf, app_name + "/" + stream_key)
 		}
 	}
 }
 
+func playHandler(w http.ResponseWriter, r *http.Request){
+	vars := mux.Vars(r)
+	app_name := vars["app_name"]
+	stream_key := vars["stream_key"]
+	logging.Infof("publish stream %v / %v", app_name, stream_key)
+
+	c, ok := websocket.TryUpgrade(w, r)
+	if ok != true {
+		logging.Error("[ws] upgrade failed")
+		return 
+	}
+	defer c.Close()
+
+	logging.Info("remote addr: ", c.RemoteAddr())
+
+	subscriber, err := broker.Attach()
+	if err != nil {
+		c.Close()
+		logging.Error("subscribe error: ", err)
+		return
+	}
+	
+	broker.Subscribe(subscriber, app_name + "/" + "stream_key")
+	for  {
+		select {
+		case <- c.Closing():
+			broker.Detach(subscriber)
+		case msg := <-subscriber.GetMessages():
+			data := msg.GetData()
+			_, err := c.Write(data)
+			if err != nil {
+				c.Close()
+				return
+			}
+		}
+	}
+	return
+}
+
+
+
 func main() {
-	log.SetFlags(log.Ldate | log.Ltime)
+	var localAddr = flag.String("l", ":8080", "")
+	var wait time.Duration
+	flag.DurationVar(&wait, "graceful-timeout", time.Second * 15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	upgrader.EnableCompression = *wsComp
-	Vf(1, "ws EnableCompression = %v\n", *wsComp)
-	Vf(1, "server Listen @ %v\n", *localAddr)
+	logging.Info("start ws-relay ....")
+	logging.Infof("server listen @ %v", *localAddr)
 
-	newclients = make(chan *WsClient, 16)
-	bufCh = make(chan []byte, 1)
-	go broacast()
+	r := mux.NewRouter()
+	r.HandleFunc("/publish/{app_name}/{stream_key}", publishHandler).Methods("POST")
+	r.HandleFunc("/play/{app_name}/{stream_key}", playHandler)
 
-	http.HandleFunc("/stream", wsHandler)
+	srv := &http.Server{
+        Addr:         "0.0.0.0:8080",
+        // Good practice to set timeouts to avoid Slowloris attacks.
+        WriteTimeout: time.Second * 15,
+        ReadTimeout:  time.Second * 15,
+        IdleTimeout:  time.Second * 60,
+        Handler: r, // Pass our instance of gorilla/mux in.
+    }
 
-	secretUrl := "/" + *secret
-	http.HandleFunc(secretUrl, streamHandler)
+    // Run our server in a goroutine so that it doesn't block.
+    go func() {
+        if err := srv.ListenAndServe(); err != nil {
+            logging.Error("server listen error:", err)
+        }
+    }()
 
-	//	http.HandleFunc("/", pageHandler)
-	http.Handle("/", http.FileServer(http.Dir("./")))
+    c := make(chan os.Signal, 1)
+    // We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+    // SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
+    signal.Notify(c, os.Interrupt)
 
-	err := http.ListenAndServe(*localAddr, nil)
-	if err != nil {
-		Vln(1, "server listen error:", err)
-	}
-}
+    // Block until we receive our signal.
+    <-c
 
-func Vln(level int, v ...interface{}) {
-	if level <= *verbosity {
-		log.Println(v...)
-	}
-}
+    // Create a deadline to wait for.
+    ctx, cancel := context.WithTimeout(context.Background(), wait)
+    defer cancel()
+    // Doesn't block if no connections, but will otherwise wait
+    // until the timeout deadline.
+    srv.Shutdown(ctx)
+    // Optionally, you could run srv.Shutdown in a goroutine and block on
+    // <-ctx.Done() if your application should wait for other services
+    // to finalize based on context cancellation.
+    logging.Info("shutting down")
+    os.Exit(0)
 
-func Vf(level int, format string, v ...interface{}) {
-	if level <= *verbosity {
-		log.Printf(format, v...)
-	}
+
+	// newclients = make(chan *WsClient, 16)
+	// bufCh = make(chan []byte, 1)
+	// go broacast()
+
+	// http.HandleFunc("/stream", wsHandler)
+
+	// secretUrl := "/" + *secret
+	// http.HandleFunc(secretUrl, streamHandler)
+
+	// //	http.HandleFunc("/", pageHandler)
+	// http.Handle("/", http.FileServer(http.Dir("./")))
+
+	// err := http.ListenAndServe(*localAddr, nil)
+	// if err != nil {
+	// 	logging.Error("server listen error:", err)
+	// }
 }
