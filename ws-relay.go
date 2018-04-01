@@ -119,6 +119,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
             }
         }
     }
+    r.Body.Close()
 }
 
 func playHandler(w http.ResponseWriter, r *http.Request){
