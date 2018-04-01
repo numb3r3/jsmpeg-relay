@@ -102,6 +102,9 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     logging.Infof("publish stream %v / %v", app_name, stream_key)
     if r.Body != nil {
         logging.Info("[stream] [new]", r.RemoteAddr)
+        w.WriteHeader(200)
+        flusher := w.(http.Flusher)
+        flusher.Flush()
         buf := make([]byte, 1024*1024)
         for {
             n, err := r.Body.Read(buf)
@@ -110,7 +113,9 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
                 logging.Error("[stream][recv] error:", err)
                 return
             }
-            broker.Broadcast(buf, app_name + "/" + stream_key)
+            if n > 0 {
+                broker.Broadcast(buf[:n], app_name + "/" + stream_key)
+            }
         }
     }
 }
@@ -172,8 +177,8 @@ func main() {
     srv := &http.Server{
         Addr:         "0.0.0.0:8080",
         // Good practice to set timeouts to avoid Slowloris attacks.
-        WriteTimeout: time.Second * 15,
-        ReadTimeout:  time.Second * 15,
+        WriteTimeout: time.Second * 0,
+        ReadTimeout:  time.Second * 0,
         IdleTimeout:  time.Second * 60,
         Handler: r, // Pass our instance of gorilla/mux in.
     }
