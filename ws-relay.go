@@ -108,12 +108,13 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
         buf := make([]byte, 1024*1024)
         for {
             n, err := r.Body.Read(buf)
-            logging.Info("[stream][recv]", n, err)
+            // logging.Info("[stream][recv]", n, err)
             if err != nil {
                 logging.Error("[stream][recv] error:", err)
                 return
             }
             if n > 0 {
+                // logging.Info("broadcast stream")
                 broker.Broadcast(buf[:n], app_name + "/" + stream_key)
             }
         }
@@ -124,7 +125,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
     vars := mux.Vars(r)
     app_name := vars["app_name"]
     stream_key := vars["stream_key"]
-    logging.Infof("publish stream %v / %v", app_name, stream_key)
+    logging.Infof("play stream %v / %v", app_name, stream_key)
 
     c, ok := websocket.TryUpgrade(w, r)
     if ok != true {
@@ -133,7 +134,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
     }
     defer c.Close()
 
-    logging.Info("remote addr: ", c.RemoteAddr())
+    logging.Info("client remote addr: ", c.RemoteAddr())
 
     subscriber, err := broker.Attach()
     if err != nil {
@@ -142,12 +143,14 @@ func playHandler(w http.ResponseWriter, r *http.Request){
         return
     }
     
-    broker.Subscribe(subscriber, app_name + "/" + "stream_key")
+    broker.Subscribe(subscriber, app_name + "/" + stream_key)
     for  {
         select {
         case <- c.Closing():
+            // logging.Info("subscriber end")
             broker.Detach(subscriber)
         case msg := <-subscriber.GetMessages():
+            // logging.Info("[stream][send]")
             data := msg.GetData()
             _, err := c.Write(data)
             if err != nil {

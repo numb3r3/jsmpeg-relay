@@ -22,7 +22,7 @@
 	<script type="text/javascript" src="jsmpeg.min.js"></script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('video-canvas');
-		var url = 'ws://'+document.location.host+'/stream';
+		var url = 'ws://'+'localhost:8080'+'/play/live/stream';
 		var player = new JSMpeg.Player(url, {canvas: canvas});
 		var ele = document.getElementById('time')
 		function startTime() {
