@@ -18,83 +18,6 @@ import (
 //Broker default
 var broker = pubsub.NewBroker()
 
-// var newclients chan *WsClient
-// var bufCh chan []byte
-
-// type WsClient struct {
-//  *websocket.Conn
-//  data chan []byte
-// }
-
-// func NewWsClient(c *websocket.Conn) *WsClient {
-//  return &WsClient{c, make(chan []byte, 16)}
-// }
-
-// func (c *WsClient) Send(buf []byte) {
-//  select {
-//  case <-c.data:
-//  default:
-//  }
-//  c.data <- buf
-// }
-
-// func (c *WsClient) worker() {
-//  for {
-//      buf := <-c.data
-//      err := c.WriteMessage(websocket.BinaryMessage, buf)
-//      if err != nil {
-//          c.Close()
-//          return
-//      }
-//  }
-// }
-
-// func broacast() {
-//  clients := make(map[*WsClient]*WsClient, 0)
-
-//  for {
-//      data := <-bufCh
-//      for _, c := range clients {
-//          c.Send(data)
-//      }
-//      for len(newclients) > 0 {
-//          c := <-newclients
-//          clients[c] = c
-//          logging.Debug("[ws] [new client]", c.RemoteAddr())
-//      }
-//  }
-// }
-
-// func wsHandler(w http.ResponseWriter, r *http.Request) {
-//  c, err := upgrader.Upgrade(w, r, nil)
-//  if err != nil {
-//      logging.Error("[ws] upgrade failed:", err)
-//      return
-//  }
-//  defer c.Close()
-
-//  client := NewWsClient(c)
-//  newclients <- client
-
-//  client.worker()
-// }
-
-// func streamHandler(w http.ResponseWriter, r *http.Request) {
-//  if r.Body != nil {
-//      logging.Info("[stream] [new]", r.RemoteAddr)
-
-//      buf := make([]byte, 1024*1024)
-//      for {
-//          n, err := r.Body.Read(buf)
-//          logging.Info("[stream][recv]", n, err)
-//          if err != nil {
-//              logging.Info("[stream][recv]err:", err)
-//              return
-//          }
-//          bufCh <- buf[:n]
-//      }
-//  }
-// }
 
 func publishHandler(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
@@ -220,21 +143,4 @@ func main() {
     logging.Info("shutting down")
     os.Exit(0)
 
-
-    // newclients = make(chan *WsClient, 16)
-    // bufCh = make(chan []byte, 1)
-    // go broacast()
-
-    // http.HandleFunc("/stream", wsHandler)
-
-    // secretUrl := "/" + *secret
-    // http.HandleFunc(secretUrl, streamHandler)
-
-    // //   http.HandleFunc("/", pageHandler)
-    // http.Handle("/", http.FileServer(http.Dir("./")))
-
-    // err := http.ListenAndServe(*localAddr, nil)
-    // if err != nil {
-    //  logging.Error("server listen error:", err)
-    // }
 }
