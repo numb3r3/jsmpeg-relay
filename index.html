@@ -24,6 +24,20 @@
 		var canvas = document.getElementById('video-canvas');
 		var url = 'ws://'+'182.92.132.131:8181'+'/play/live/s_1_1001106_1024999';
 		var player = new JSMpeg.Player(url, {canvas: canvas, pauseWhenHidden: false, audioBufferSize: 250*1024});
+		function onUnlocked () {
+			// console.log('unlock video audio: ' + url)
+			player.volume = 1
+			document.removeEventListener('touchstart', onTouchStart)
+		}
+		function onTouchStart () {
+			player.audioOut.unlock(onUnlocked)
+			document.removeEventListener('touchstart', onTouchStart)
+		}
+		// try to unlock immediately
+		player.audioOut.unlock(onUnlocked)
+		// try to unlock by touchstart event
+		document.addEventListener('touchstart', onTouchStart, false)
+		
 		var ele = document.getElementById('time')
 		function startTime() {
 			requestAnimationFrame(startTime)
