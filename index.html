@@ -22,8 +22,8 @@
 	<script type="text/javascript" src="jsmpeg.min.js"></script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('video-canvas');
-		var url = 'ws://'+'localhost:8080'+'/play/live/stream';
-		var player = new JSMpeg.Player(url, {canvas: canvas});
+		var url = 'ws://'+'182.92.132.131:8181'+'/play/live/s_1_1001106_1024999';
+		var player = new JSMpeg.Player(url, {canvas: canvas, pauseWhenHidden: false, audioBufferSize: 250*1024});
 		var ele = document.getElementById('time')
 		function startTime() {
 			requestAnimationFrame(startTime)
