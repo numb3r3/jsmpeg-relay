@@ -166,20 +166,20 @@ func playHandler(w http.ResponseWriter, r *http.Request){
 
 
 func main() {
-    var localAddr = flag.String("l", ":8080", "")
+    var listen_addr = flag.String("l", "0.0.0.0:8080", "")
     var wait time.Duration
     flag.DurationVar(&wait, "graceful-timeout", time.Second * 15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
     flag.Parse()
 
     logging.Info("start ws-relay ....")
-    logging.Infof("server listen @ %v", *localAddr)
+    logging.Infof("server listen @ %v", *listen_addr)
 
     r := mux.NewRouter()
     r.HandleFunc("/publish/{app_name}/{stream_key}", publishHandler).Methods("POST")
     r.HandleFunc("/play/{app_name}/{stream_key}", playHandler)
 
     srv := &http.Server{
-        Addr:         "0.0.0.0:8080",
+        Addr:         *listen_addr,
         // Good practice to set timeouts to avoid Slowloris attacks.
         WriteTimeout: time.Second * 0,
         ReadTimeout:  time.Second * 0,
