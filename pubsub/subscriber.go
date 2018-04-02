@@ -23,7 +23,7 @@ func (s *Subscriber) GetID() string {
 // to get the subscriber topics
 func (s *Subscriber) GetTopics() []string {
     topics := []string{}
-    for topic := range s.topics {
+    for topic, _ := range s.topics {
         topics = append(topics, topic)
     }
     return topics
