@@ -7,6 +7,7 @@ import (
     "os"
     "os/signal"
     "time"
+    "io"
 
     "github.com/gorilla/mux"
     "github.com/numb3r3/jsmpeg-relay/pubsub"
@@ -99,15 +100,16 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     app_name := vars["app_name"]
     stream_key := vars["stream_key"]
-    logging.Infof("publish stream %v / %v", app_name, stream_key)
+    // logging.Infof("publish stream %v / %v", app_name, stream_key)
     if r.Body != nil {
-        logging.Info("[stream] [new]", r.RemoteAddr)
-        w.WriteHeader(200)
-        flusher := w.(http.Flusher)
-        flusher.Flush()
+        logging.Debugf("publishing stream %v / %v from %v", app_name, stream_key, r.RemoteAddr)
+        
         buf := make([]byte, 1024*1024)
         for {
             n, err := r.Body.Read(buf)
+            if err == io.EOF {
+                break
+            }
             // logging.Info("[stream][recv]", n, err)
             if err != nil {
                 logging.Error("[stream][recv] error:", err)
@@ -120,6 +122,10 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
     r.Body.Close()
+    w.WriteHeader(200)
+    flusher := w.(http.Flusher)
+    flusher.Flush()
+    
 }
 
 func playHandler(w http.ResponseWriter, r *http.Request){
