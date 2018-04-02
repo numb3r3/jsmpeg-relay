@@ -38,7 +38,6 @@ const (
 
 // The default upgrader to use
 var upgrader = &websocket.Upgrader{
-    Subprotocols: []string{"mqttv3.1", "mqttv3", "mqttv3"},
     CheckOrigin:  func(r *http.Request) bool { return true },
 }
 
