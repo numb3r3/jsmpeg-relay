@@ -84,7 +84,6 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 logging.Debug("closing channel is closed")
             }
             return
-        default:
         }
 
     }()
@@ -116,7 +115,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 logging.Error("write mesage error: ", err)
                 return
             }
-        default:
+
         }
     }
     return
