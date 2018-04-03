@@ -144,7 +144,7 @@ func (c *websocketTransport) Close() (err error) {
     if err := c.socket.Close(); err != nil {
         logging.Error("websocket could not be closed: ", err)
     }
-    // close(c.closing)
+    close(c.closing)
     logging.Debug("websocket connection closed")
     // return c.socket.Close()
     return
