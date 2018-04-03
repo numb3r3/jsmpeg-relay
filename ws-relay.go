@@ -64,14 +64,17 @@ func playHandler(w http.ResponseWriter, r *http.Request){
         logging.Error("[ws] upgrade failed")
         return 
     }
+    // cleanup on server side
+    defer c.Close()
+
+
     subscriber, err := broker.Attach()
     if err != nil {
         c.Close()
         logging.Error("subscribe error: ", err)
         return
     }
-    // cleanup on server side
-    defer c.Close()
+    
 
     go func() {
 
@@ -84,6 +87,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 logging.Debug("closing channel is closed")
             }
             return
+        default:
         }
 
     }()
