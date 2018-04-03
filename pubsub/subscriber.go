@@ -48,6 +48,9 @@ func (s *Subscriber) Signal(m *Message) *Subscriber {
 func (s *Subscriber) Destroy() {
     s.lock.Lock()
     defer s.lock.Unlock()
-    s.destroyed = true
-    close(s.messages)
+    if !s.destroyed {
+        s.destroyed = true
+        close(s.messages)
+    }
+    
 }
