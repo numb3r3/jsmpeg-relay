@@ -51,9 +51,9 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     
 }
 
-func closeHandle(closing chan bool, subscriber *pubsub.Subscriber) {
+func closeHandle(ws *websocket.websocketTransport, subscriber *pubsub.Subscriber) {
     select {
-    case <- closing:
+    case <- ws.Closing():
         logging.Info("websocket closed: to unsubscribe")
         broker.Detach(subscriber)
     default:
