@@ -79,7 +79,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 broker.Detach(subscriber)
             default:
             }
-    }
+    }()
    
     // defer func() {
     //     logging.Debug("websocket closed: to unsubscribe")
