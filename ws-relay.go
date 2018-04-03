@@ -62,16 +62,24 @@ func playHandler(w http.ResponseWriter, r *http.Request){
         logging.Error("[ws] upgrade failed")
         return 
     }
-    defer c.Close()
-
-    logging.Info("client remote addr: ", c.RemoteAddr())
-
     subscriber, err := broker.Attach()
     if err != nil {
         c.Close()
         logging.Error("subscribe error: ", err)
         return
     }
+    
+    // defer c.Close()
+    // cleanup on server side
+    defer func() {
+        c.Close()
+        logging.Debug("websocket closed: to unsubscribe")
+        broker.Detach(subscriber)
+    }()
+     
+
+    logging.Info("client remote addr: ", c.RemoteAddr())
+
     
     broker.Subscribe(subscriber, app_name + "/" + stream_key)
     for  {
