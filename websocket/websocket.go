@@ -62,11 +62,15 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
         closing: make(chan bool),
     }
 
-    // ws.SetCloseHandler(func(code int, text string) error {
-    //     // conn.closing <- true;
-    //     // close(conn.closing)
-    //     return conn.Close()
-    // })
+    ws.SetCloseHandler(func(code int, text string) (err error) {
+        conn.closing <- true
+        if err := conn.Close(); err != nil {
+            logging.Error("callback: websocket could not be closed: ", err)
+        }
+        close(conn.closing)
+        logging.Debug("callback: websocket connection closed")
+        return
+    })
 
     /*ws.SetReadLimit(maxMessageSize)
     ws.SetReadDeadline(time.Now().Add(pongWait))
