@@ -145,6 +145,7 @@ func (c *websocketTransport) Close() (err error) {
     c.closing <- true;
     close(c.closing)
     // return c.socket.Close()
+    return
 }
 
 // LocalAddr returns the local network address.
