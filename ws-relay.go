@@ -110,7 +110,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
             data := msg.GetData()
             _, err := c.Write(data)
             if err != nil {
-                c.Close()
+                // c.Close()
                 logging.Error("write mesage error: ", err)
                 return
             }
