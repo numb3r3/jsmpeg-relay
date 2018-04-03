@@ -51,6 +51,16 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     
 }
 
+def closeHandle(closing chan bool, subscriber *Subscriber) {
+    select {
+    case <- closing:
+        logging.Info("websocket closed: to unsubscribe")
+        broker.Detach(subscriber)
+    default:
+    }
+    
+}
+
 func playHandler(w http.ResponseWriter, r *http.Request){
     vars := mux.Vars(r)
     app_name := vars["app_name"]
@@ -68,14 +78,15 @@ func playHandler(w http.ResponseWriter, r *http.Request){
         logging.Error("subscribe error: ", err)
         return
     }
-    
-    // defer c.Close()
     // cleanup on server side
-    defer func() {
-        logging.Debug("websocket closed: to unsubscribe")
-        broker.Detach(subscriber)
-        c.Close()
-    }()
+    defer c.Close()
+
+    go closeHandle(c.Closing(), subscriber)
+    // defer func() {
+    //     logging.Debug("websocket closed: to unsubscribe")
+    //     broker.Detach(subscriber)
+    //     c.Close()
+    // }()
      
 
     logging.Info("client remote addr: ", c.RemoteAddr())
@@ -95,6 +106,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 c.Close()
                 return
             }
+        default:
         }
     }
     return
