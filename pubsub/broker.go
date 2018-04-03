@@ -51,6 +51,7 @@ func (b *Broker) Detach(s *Subscriber) {
     defer b.slock.Unlock()
     s.Destroy()
     b.Unsubscribe(s, s.GetTopics()...)
+    delete(s.subscribes, s.id)
 }
 
 // subscribes the specific subscriber "s" to the specific list of topic(s)
@@ -81,14 +82,17 @@ func (b *Broker) Unsubscribe(s *Subscriber, topics ...string) {
 
 // broadcast the specific payload to all the topic(s) subscribers
 func (b *Broker) Broadcast(data []byte, topics ...string) {
-    b.tlock.RLock()
-    defer b.tlock.RUnlock()
+    // b.tlock.RLock()
+    // defer b.tlock.RUnlock()
     for _, topic := range topics {
         for _, s := range b.topics[topic] {
             m := &Message{
                 topic:      topic,
                 data:       data,
                 createAt:   time.Now().UnixNano(),
+            }
+            if s.destroyed {
+                continue
             }
             go (func(s *Subscriber) {
                 s.Signal(m)
