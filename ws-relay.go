@@ -79,6 +79,8 @@ func playHandler(w http.ResponseWriter, r *http.Request){
                 if ok {
                     logging.Debug("websocket closed: to unsubscribe")
                     broker.Detach(subscriber)
+                } else {
+                    logging.Debug("closing channel is closed")
                 }
                 
                 return
