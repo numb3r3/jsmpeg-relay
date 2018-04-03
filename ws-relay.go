@@ -51,7 +51,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     
 }
 
-func closeHandle(closing chan bool, subscriber *Subscriber) {
+func closeHandle(closing chan bool, subscriber *pubsub.Subscriber) {
     select {
     case <- closing:
         logging.Info("websocket closed: to unsubscribe")
