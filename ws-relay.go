@@ -77,7 +77,7 @@ func playHandler(w http.ResponseWriter, r *http.Request){
     for  {
         select {
         case <- c.Closing():
-            // logging.Info("subscriber end")
+            logging.Info("websocket closed: to unsubscribe")
             broker.Detach(subscriber)
         case msg := <-subscriber.GetMessages():
             // logging.Info("[stream][send]")
