@@ -17,7 +17,7 @@ type Broker struct {
 // create new broker
 func NewBroker() *Broker {
     return &Broker{
-        subscribers: Subscribers{},
+        // subscribers: Subscribers{},
         slock:       sync.RWMutex{},
         topics:      map[string]Subscribers{},
         tlock:       sync.RWMutex{},
@@ -26,8 +26,8 @@ func NewBroker() *Broker {
 
 // create a new subscriber and register it into the broker
 func (b *Broker) Attach() (*Subscriber, error) {
-    b.slock.Lock()
-    defer b.slock.Unlock()
+    // b.slock.Lock()
+    // defer b.slock.Unlock()
     id := make([]byte, 50)
     if _, err := rand.Read(id); err != nil {
         return nil, err
@@ -41,17 +41,16 @@ func (b *Broker) Attach() (*Subscriber, error) {
         lock:      &sync.RWMutex{},
         topics:    map[string]bool{},
     }
-    b.subscribers[s.id] = s
+    // b.subscribers[s.id] = s
     return s, nil
 }
 
 // remove the specific subscriber from the broker
 func (b *Broker) Detach(s *Subscriber) {
-    b.slock.Lock()
-    defer b.slock.Unlock()
+    // b.slock.Lock()
+    // defer b.slock.Unlock()
     s.Destroy()
     b.Unsubscribe(s, s.GetTopics()...)
-    delete(s.subscribes, s.id)
 }
 
 // subscribes the specific subscriber "s" to the specific list of topic(s)
@@ -85,6 +84,9 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
     // b.tlock.RLock()
     // defer b.tlock.RUnlock()
     for _, topic := range topics {
+        if nil == b.topics[topic] {
+            continue
+        }
         for _, s := range b.topics[topic] {
             m := &Message{
                 topic:      topic,
