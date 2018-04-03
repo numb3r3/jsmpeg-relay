@@ -51,15 +51,6 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
     
 }
 
-func closeHandle(ws *websocket.websocketTransport, subscriber *pubsub.Subscriber) {
-    select {
-    case <- ws.Closing():
-        logging.Info("websocket closed: to unsubscribe")
-        broker.Detach(subscriber)
-    default:
-    }
-    
-}
 
 func playHandler(w http.ResponseWriter, r *http.Request){
     vars := mux.Vars(r)
@@ -81,7 +72,15 @@ func playHandler(w http.ResponseWriter, r *http.Request){
     // cleanup on server side
     defer c.Close()
 
-    go closeHandle(c, subscriber)
+    go func() {
+        select {
+            case <- c.Closing():
+                logging.Info("websocket closed: to unsubscribe")
+                broker.Detach(subscriber)
+            default:
+            }
+    }
+   
     // defer func() {
     //     logging.Debug("websocket closed: to unsubscribe")
     //     broker.Detach(subscriber)
@@ -95,9 +94,9 @@ func playHandler(w http.ResponseWriter, r *http.Request){
     broker.Subscribe(subscriber, app_name + "/" + stream_key)
     for  {
         select {
-        case <- c.Closing():
-            logging.Info("websocket closed: to unsubscribe")
-            broker.Detach(subscriber)
+        // case <- c.Closing():
+        //     logging.Info("websocket closed: to unsubscribe")
+        //     broker.Detach(subscriber)
         case msg := <-subscriber.GetMessages():
             // logging.Info("[stream][send]")
             data := msg.GetData()
