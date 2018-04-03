@@ -63,7 +63,7 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
     }
 
     ws.SetCloseHandler(func(code int, text string) error {
-        conn.closing <- true;
+        // conn.closing <- true;
         // close(conn.closing)
         return conn.Close()
     })
