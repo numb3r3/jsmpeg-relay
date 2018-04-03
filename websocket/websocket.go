@@ -140,7 +140,7 @@ func(c *websocketTransport) Closing() <-chan bool{
 
 // Close terminates the connection.
 func (c *websocketTransport) Close() (err error) {
-    c.closing <- true;
+    c.closing <- true
     if err := c.socket.Close(); err != nil {
         logging.Error("websocket could not be closed: ", err)
     }
