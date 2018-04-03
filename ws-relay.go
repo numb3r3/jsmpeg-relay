@@ -70,25 +70,25 @@ func playHandler(w http.ResponseWriter, r *http.Request){
         return
     }
     // cleanup on server side
-    defer c.Close()
+    // defer c.Close()
 
-    go func() {
-        for {
-            select {
-            case <-c.Closing():
-                logging.Info("websocket closed: to unsubscribe")
-                broker.Detach(subscriber)
-                return
-            default:
-            }
-        }
-    }()
-   
-    // defer func() {
-    //     logging.Debug("websocket closed: to unsubscribe")
-    //     broker.Detach(subscriber)
-    //     c.Close()
+    // go func() {
+    //     for {
+    //         select {
+    //         case <-c.Closing():
+    //             logging.Info("websocket closed: to unsubscribe")
+    //             broker.Detach(subscriber)
+    //             return
+    //         default:
+    //         }
+    //     }
     // }()
+   
+    defer func() {
+        logging.Debug("websocket closed: to unsubscribe")
+        broker.Detach(subscriber)
+        c.Close()
+    }()
      
 
     logging.Info("client remote addr: ", c.RemoteAddr())
