@@ -8,6 +8,7 @@ import (
     "time"
 
     "github.com/gorilla/websocket"
+    "github.com/numb3r3/jsmpeg-relay/log"
 )
 
 type websocketConn interface {
@@ -137,9 +138,12 @@ func(c *websocketTransport) Closing() <-chan bool{
 }
 
 // Close terminates the connection.
-func (c *websocketTransport) Close() error {
+func (c *websocketTransport) Close() (err error) {
+    if err := s.socket.Close(); err != nil {
+        logging.Error("websocket could not be closed: ", err)
+    }
     c.closing <- true;
-    return c.socket.Close()
+    // return c.socket.Close()
 }
 
 // LocalAddr returns the local network address.
