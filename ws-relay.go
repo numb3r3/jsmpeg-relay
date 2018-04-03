@@ -4,6 +4,7 @@ import (
     "context"
     "flag"
     "net/http"
+    _ "net/http/pprof"
     "os"
     "os/signal"
     "time"
@@ -135,6 +136,11 @@ func main() {
     r := mux.NewRouter()
     r.HandleFunc("/publish/{app_name}/{stream_key}", publishHandler).Methods("POST")
     r.HandleFunc("/play/{app_name}/{stream_key}", playHandler)
+    r.HandleFunc("/debug/pprof/", pprof.Index)
+    r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+    r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+    r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+    r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
     srv := &http.Server{
         Addr:         *listen_addr,
