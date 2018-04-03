@@ -138,6 +138,7 @@ func(c *websocketTransport) Closing() <-chan bool{
 
 // Close terminates the connection.
 func (c *websocketTransport) Close() error {
+    c.closing <- true;
     return c.socket.Close()
 }
 
