@@ -27,8 +27,8 @@ func NewBroker() *Broker {
 
 // create a new subscriber and register it into the broker
 func (b *Broker) Attach() (*Subscriber, error) {
-	// b.slock.Lock()
-	// defer b.slock.Unlock()
+	b.slock.Lock()
+	defer b.slock.Unlock()
 	id := make([]byte, 50)
 	if _, err := rand.Read(id); err != nil {
 		return nil, err
@@ -48,8 +48,8 @@ func (b *Broker) Attach() (*Subscriber, error) {
 
 // remove the specific subscriber from the broker
 func (b *Broker) Detach(s *Subscriber) {
-	// b.slock.Lock()
-	// defer b.slock.Unlock()
+	b.slock.Lock()
+	defer b.slock.Unlock()
 	s.Destroy()
 	b.Unsubscribe(s, s.GetTopics()...)
 }

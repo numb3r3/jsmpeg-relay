@@ -99,9 +99,9 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 				logging.Error("websockt write mesage error: ", err)
 				return
 			}
-		case <-subscriber.Closing():
-			logging.Debug("subscriber destroyed")
-			return
+		// case <-subscriber.Closing():
+		// 	logging.Debug("subscriber destroyed")
+		// 	return
 		case <-c.Closing():
 			logging.Debug("received closeing signal, to close the websocket")
 			return
