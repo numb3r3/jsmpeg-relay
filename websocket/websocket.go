@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/numb3r3/jsmpeg-relay/log"
+	"github.com/numb3r3/jsmpeg-relay/utils"
 )
 
 type websocketConn interface {
@@ -21,6 +22,8 @@ type websocketConn interface {
 	SetReadDeadline(t time.Time) error
 	SetWriteDeadline(t time.Time) error
 	SetCloseHandler(h func(code int, text string) error)
+	SetPongHandler(h func(appData string) error)
+	WriteControl(messageType int, data []byte, deadline time.Time) error
 }
 
 // websocketConn represents a websocket connection.
@@ -65,6 +68,7 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 		closing: make(chan bool),
 	}
 
+
 	ws.SetCloseHandler(func(code int, text string) (err error) {
 		conn.closing <- true
 		if err := conn.Close(); err != nil {
@@ -74,6 +78,15 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 		logging.Debug("callback: websocket connection closed")
 		return
 	})
+
+	ws.SetReadDeadline(time.Now().Add(pongWait))
+	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	utils.Repeat(func() {
+	      logging.Debug("to write ping")
+	      if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+	          logging.Debug("ping err: ", err)
+	      }
+	  }, pingPeriod, conn.closing)
 
 	/*ws.SetReadLimit(maxMessageSize)
 	  ws.SetReadDeadline(time.Now().Add(pongWait))
@@ -127,22 +140,18 @@ func (c *websocketTransport) Read(b []byte) (n int, err error) {
 // Write writes data to the connection. It is possible to allow writer to time
 // out and return a Error with Timeout() == true after a fixed time limit by
 // using SetDeadline and SetWriteDeadline on the websocket.
-func (c *websocketTransport) Write(b []byte) (err error) {
-	// // Serialize write to avoid concurrent write
-	// c.Lock()
-	// defer c.Unlock()
+func (c *websocketTransport) Write(b []byte) (n int, err error) {
+	// Serialize write to avoid concurrent write
+	c.Lock()
+	defer c.Unlock()
 
-	if err := c.socket.WriteMessage(websocket.BinaryMessage, b); err != nil {
-        return err
-    }
-
-	// var w io.WriteCloser
-	// if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
-	// 	if n, err = w.Write(b); err == nil {
-	// 		err = w.Close()
-	// 	}
-	// }
-	return nil
+	var w io.WriteCloser
+	if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
+		if n, err = w.Write(b); err == nil {
+			err = w.Close()
+		}
+	}
+	return
 }
 
 func (c *websocketTransport) Closing() <-chan bool {

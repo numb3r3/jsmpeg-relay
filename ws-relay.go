@@ -57,6 +57,10 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	logging.Infof("play stream %v / %v", appName, streamKey)
 
+	// TODO: identify unique connection by the same peer
+	// addrStr := fmt.Sprintf("%p", &conn)
+	// keyWord := conn.RemoteAddr().String() + conn.RemoteAddr().Network() + addrStr
+
 	c, ok := websocket.TryUpgrade(w, r)
 	if ok != true {
 		logging.Error("[ws] upgrade failed")
@@ -78,22 +82,6 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		c.Close()
 	}()
 
-	// go func() {
-
-	//     select {
-	//     case _, ok := <-c.Closing():
-	//         if ok {
-	//             logging.Debug("websocket closed: to unsubscribe")
-	//             broker.Detach(subscriber)
-	//         } else {
-	//             logging.Debug("closing channel is closed")
-	//         }
-	//         return
-	//     default:
-	//     }
-
-	// }()
-
 	logging.Info("client remote addr: ", c.RemoteAddr())
 
 	broker.Subscribe(subscriber, appName+"/"+streamKey)
@@ -105,10 +93,10 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		case msg := <-subscriber.GetMessages():
 			// logging.Info("[stream][send]")
 			data := msg.GetData()
-			if err := c.Write(data); err != nil {
+			if _, err := c.Write(data); err != nil {
 				logging.Debug("to unsubscribe")
 				broker.Detach(subscriber)
-				logging.Error("write mesage error: ", err)
+				logging.Error("websockt write mesage error: ", err)
 				return
 			}
 		case <-subscriber.Closing():
