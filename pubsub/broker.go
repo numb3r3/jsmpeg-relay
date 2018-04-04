@@ -27,8 +27,8 @@ func NewBroker() *Broker {
 
 // create a new subscriber and register it into the broker
 func (b *Broker) Attach() (*Subscriber, error) {
-	b.slock.Lock()
-	defer b.slock.Unlock()
+	// b.slock.Lock()
+	// defer b.slock.Unlock()
 	id := make([]byte, 50)
 	if _, err := rand.Read(id); err != nil {
 		return nil, err
@@ -36,11 +36,12 @@ func (b *Broker) Attach() (*Subscriber, error) {
 
 	s := &Subscriber{
 		id:        hex.EncodeToString(id),
-		messages:  make(chan *Message, 10),
+		messages:  make(chan *Message),
 		createAt:  time.Now().UnixNano(),
 		destroyed: false,
 		lock:      &sync.RWMutex{},
 		topics:    map[string]bool{},
+		closing:   make(chan bool, 1),
 	}
 	// b.subscribers[s.id] = s
 	return s, nil

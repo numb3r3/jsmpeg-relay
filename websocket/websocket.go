@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/numb3r3/jsmpeg-relay/log"
-	"github.com/numb3r3/jsmpeg-relay/utils"
+	// "github.com/numb3r3/jsmpeg-relay/utils"
 )
 
 type websocketConn interface {
@@ -65,7 +65,7 @@ func TryUpgrade(w http.ResponseWriter, r *http.Request) (*websocketTransport, bo
 func newWebsocketConn(ws websocketConn) *websocketTransport {
 	conn := &websocketTransport{
 		socket:  ws,
-		closing: make(chan bool),
+		closing: make(chan bool, 1),
 	}
 
 
@@ -79,15 +79,15 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	// 	return
 	// })
 
-	ws.SetReadDeadline(time.Now().Add(pongWait))
-	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	utils.Repeat(func() {
-	      logging.Debug("to write ping")
-	      if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-	          logging.Debug("ping err: ", err)
-	          conn.closing <- true
-	      }
-	  }, pingPeriod, conn.closing)
+	// ws.SetReadDeadline(time.Now().Add(pongWait))
+	// ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	// utils.Repeat(func() {
+	//       logging.Debug("to write ping")
+	//       if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+	//           logging.Debug("ping err: ", err)
+	//           // conn.closing <- true
+	//       }
+	//   }, pingPeriod, conn.closing)
 
 	/*ws.SetReadLimit(maxMessageSize)
 	  ws.SetReadDeadline(time.Now().Add(pongWait))

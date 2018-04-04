@@ -75,6 +75,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		logging.Error("subscribe error: ", err)
 		return
 	}
+
 	// defer broker.Detach(subscriber)
 	defer func() {
 		logging.Debug("websocket closed: to unsubscribe")
@@ -90,6 +91,12 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		// case <- c.Closing():
 		//     logging.Info("websocket closed: to unsubscribe")
 		//     broker.Detach(subscriber)
+		case <-c.Closing():
+			logging.Debug("received closeing signal, to close the websocket")
+			return
+		case <-subscriber.Closing():
+			logging.Debug("subscriber destroyed")
+			return
 		case msg := <-subscriber.GetMessages():
 			// logging.Info("[stream][send]")
 			data := msg.GetData()
@@ -99,12 +106,6 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 				logging.Error("websockt write mesage error: ", err)
 				return
 			}
-		// case <-subscriber.Closing():
-		// 	logging.Debug("subscriber destroyed")
-		// 	return
-		case <-c.Closing():
-			logging.Debug("received closeing signal, to close the websocket")
-			return
 		}
 	}
 	return
