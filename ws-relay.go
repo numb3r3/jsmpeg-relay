@@ -113,7 +113,8 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 				logging.Error("write mesage error: ", err)
 				return
 			}
-
+		case <-subscriber.Closing():
+			break
 		}
 	}
 	return
