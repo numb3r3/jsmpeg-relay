@@ -37,8 +37,8 @@ func (s *Subscriber) GetMessages() <-chan *Message {
 
 // to send a message to subscriber
 func (s *Subscriber) Signal(m *Message) *Subscriber {
-    // s.lock.RLock()
-    // defer s.lock.RUnlock()
+    s.lock.RLock()
+    defer s.lock.RUnlock()
     if !s.destroyed {
         s.messages <- m
     }
