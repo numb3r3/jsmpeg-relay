@@ -105,9 +105,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		case msg := <-subscriber.GetMessages():
 			// logging.Info("[stream][send]")
 			data := msg.GetData()
-			_, err := c.Write(data)
-			if err != nil {
-				// c.Close()
+			if err := c.Write(data); err != nil {
 				logging.Debug("to unsubscribe")
 				broker.Detach(subscriber)
 				logging.Error("write mesage error: ", err)

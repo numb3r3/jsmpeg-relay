@@ -14,6 +14,7 @@ import (
 type websocketConn interface {
 	NextReader() (messageType int, r io.Reader, err error)
 	NextWriter(messageType int) (io.WriteCloser, error)
+	WriteMessage(messageType int, data []byte) error
 	Close() error
 	LocalAddr() net.Addr
 	RemoteAddr() net.Addr
@@ -39,6 +40,8 @@ const (
 
 // The default upgrader to use
 var upgrader = &websocket.Upgrader{
+	ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
@@ -124,18 +127,22 @@ func (c *websocketTransport) Read(b []byte) (n int, err error) {
 // Write writes data to the connection. It is possible to allow writer to time
 // out and return a Error with Timeout() == true after a fixed time limit by
 // using SetDeadline and SetWriteDeadline on the websocket.
-func (c *websocketTransport) Write(b []byte) (n int, err error) {
-	// Serialize write to avoid concurrent write
-	c.Lock()
-	defer c.Unlock()
+func (c *websocketTransport) Write(b []byte) (err error) {
+	// // Serialize write to avoid concurrent write
+	// c.Lock()
+	// defer c.Unlock()
 
-	var w io.WriteCloser
-	if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
-		if n, err = w.Write(b); err == nil {
-			err = w.Close()
-		}
-	}
-	return
+	if err := c.socket.WriteMessage(websocket.BinaryMessage, b); err != nil {
+        return err
+    }
+
+	// var w io.WriteCloser
+	// if w, err = c.socket.NextWriter(websocket.BinaryMessage); err == nil {
+	// 	if n, err = w.Write(b); err == nil {
+	// 		err = w.Close()
+	// 	}
+	// }
+	return nil
 }
 
 func (c *websocketTransport) Closing() <-chan bool {
