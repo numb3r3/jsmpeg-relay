@@ -102,6 +102,8 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		case <-subscriber.Closing():
 			logging.Debug("subscriber destroyed")
 			return
+		case <-c.Closing():
+			return
 		}
 	}
 	return

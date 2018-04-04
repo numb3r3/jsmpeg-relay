@@ -69,15 +69,15 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	}
 
 
-	ws.SetCloseHandler(func(code int, text string) (err error) {
-		conn.closing <- true
-		if err := conn.Close(); err != nil {
-			logging.Error("callback: websocket could not be closed: ", err)
-		}
-		close(conn.closing)
-		logging.Debug("callback: websocket connection closed")
-		return
-	})
+	// ws.SetCloseHandler(func(code int, text string) (err error) {
+	// 	conn.closing <- true
+	// 	if err := conn.Close(); err != nil {
+	// 		logging.Error("callback: websocket could not be closed: ", err)
+	// 	}
+	// 	close(conn.closing)
+	// 	logging.Debug("callback: websocket connection closed")
+	// 	return
+	// })
 
 	ws.SetReadDeadline(time.Now().Add(pongWait))
 	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
@@ -85,7 +85,7 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	      logging.Debug("to write ping")
 	      if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
 	          logging.Debug("ping err: ", err)
-	          conn.Close()
+	          conn.closing <- true
 	      }
 	  }, pingPeriod, conn.closing)
 
