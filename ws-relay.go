@@ -33,9 +33,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
             n, err := r.Body.Read(buf)
             if err == io.EOF {
                 break
-            }
-            // logging.Info("[stream][recv]", n, err)
-            if err != nil {
+            } else if err != nil {
                 logging.Error("[stream][recv] error:", err)
                 return
             }
@@ -45,7 +43,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
             }
         }
     }
-    r.Body.Close()
+    defer r.Body.Close()
     w.WriteHeader(200)
     flusher := w.(http.Flusher)
     flusher.Flush()
