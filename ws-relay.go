@@ -103,6 +103,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 			logging.Debug("subscriber destroyed")
 			return
 		case <-c.Closing():
+			logging.Debug("received closeing signal, to close the websocket")
 			return
 		}
 	}
