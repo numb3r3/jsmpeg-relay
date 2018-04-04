@@ -93,12 +93,13 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
                 data:       data,
                 createAt:   time.Now().UnixNano(),
             }
-            if s.destroyed {
-                continue
-            }
-            go (func(s *Subscriber) {
-                s.Signal(m)
-            })(s)
+            // if s.destroyed {
+            //     continue
+            // }
+            // go (func(s *Subscriber) {
+            //     s.Signal(m)
+            // })(s)
+            s.Signal(m)
         }
     }
 }

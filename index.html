@@ -22,7 +22,8 @@
 	<script type="text/javascript" src="jsmpeg.min.js"></script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('video-canvas');
-		var url = 'ws://'+'182.92.132.131:8181'+'/play/live/s_1_1001106_1024999';
+		var url = 'wss://'+'audio.ebanshu.net'+'/play/live/s_1_1001106_1024999';
+		// var url = 'ws://'+'182.92.132.131:8181'+'/play/live/s_1_1001106_1024999';
 		var player = new JSMpeg.Player(url, {canvas: canvas, pauseWhenHidden: false, audioBufferSize: 250*1024});
 		function onUnlocked () {
 			// console.log('unlock video audio: ' + url)
