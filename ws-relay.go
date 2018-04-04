@@ -94,8 +94,8 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 			// logging.Info("[stream][send]")
 			data := msg.GetData()
 			if _, err := c.Write(data); err != nil {
-				logging.Debug("to unsubscribe")
-				broker.Detach(subscriber)
+				// logging.Debug("to unsubscribe")
+				// broker.Detach(subscriber)
 				logging.Error("websockt write mesage error: ", err)
 				return
 			}
