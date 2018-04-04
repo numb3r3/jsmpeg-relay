@@ -93,12 +93,12 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
                 data:       data,
                 createAt:   time.Now().UnixNano(),
             }
-            // if s.destroyed {
-            //     continue
-            // }
+
+            // RISK: the number of gouroutine would increase dramatically
             // go (func(s *Subscriber) {
             //     s.Signal(m)
             // })(s)
+            
             s.Signal(m)
         }
     }
