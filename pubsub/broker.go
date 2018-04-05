@@ -89,13 +89,12 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
 		if nil == b.topics[topic] {
 			continue
 		}
+        m := &Message{
+            topic:    topic,
+            data:     data,
+            createAt: time.Now().UnixNano(),
+        }
 		for _, s := range b.topics[topic] {
-			m := &Message{
-				topic:    topic,
-				data:     data,
-				createAt: time.Now().UnixNano(),
-			}
-
 			go (func(s *Subscriber) {
 				s.Signal(m)
 			})(s)

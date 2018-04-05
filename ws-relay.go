@@ -33,7 +33,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		for {
 			n, err := r.Body.Read(buf)
 			if err == io.EOF {
-				break
+				return
 			} else if err != nil {
 				logging.Error("[stream][recv] error:", err)
 				return
