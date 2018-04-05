@@ -78,15 +78,15 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	// 	return
 	// })
 
-	// ws.SetReadDeadline(time.Now().Add(pongWait))
-	// ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	// utils.Repeat(func() {
-	//       logging.Debug("to write ping")
-	//       if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-	//           logging.Debug("ping err: ", err)
-	//           // conn.closing <- true
-	//       }
-	//   }, pingPeriod, conn.closing)
+	ws.SetReadDeadline(time.Now().Add(pongWait))
+	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	utils.Repeat(func() {
+	      // logging.Debug("to write ping")
+	      if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+	          logging.Debug("ping err: ", err)
+	          // conn.closing <- true
+	      }
+	  }, pingPeriod, conn.closing)
 
 	/*ws.SetReadLimit(maxMessageSize)
 	  ws.SetReadDeadline(time.Now().Add(pongWait))
