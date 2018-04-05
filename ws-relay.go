@@ -36,13 +36,13 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 				logging.Error("[stream][recv] error:", err)
 				return
 			}
-            buf = buf[:n]
 			if n > 0 {
+
 				// logging.Info("broadcast stream")
-				broker.Broadcast(buf, appName+"/"+streamKey)
+				broker.Broadcast(buf[:n], appName+"/"+streamKey)
 			}
 		}
-        buf = nil
+
 	}
 	defer r.Body.Close()
 	w.WriteHeader(200)
