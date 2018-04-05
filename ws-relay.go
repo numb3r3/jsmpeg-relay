@@ -32,9 +32,8 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		buf := make([]byte, 1024*1024)
 		for {
 			n, err := r.Body.Read(buf)
-			if err == io.EOF {
-				return
-			} else if err != nil {
+			if err != nil {
+                buf = nil
 				logging.Error("[stream][recv] error:", err)
 				return
 			}
@@ -42,6 +41,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 				// logging.Info("broadcast stream")
 				broker.Broadcast(buf[:n], appName+"/"+streamKey)
 			}
+            buf[n:] = nil // to avoid memory leak
 		}
 	}
 	defer r.Body.Close()
