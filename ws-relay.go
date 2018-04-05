@@ -32,12 +32,10 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		for {
 			n, err := r.Body.Read(buf)
 			if err != nil {
-                buf = nil
 				logging.Error("[stream][recv] error:", err)
 				return
 			}
 			if n > 0 {
-
 				// logging.Info("broadcast stream")
 				broker.Broadcast(buf[:n], appName+"/"+streamKey)
 			}
