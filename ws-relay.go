@@ -141,7 +141,10 @@ func main() {
 		WriteTimeout: time.Second * 0,
 		ReadTimeout:  time.Second * 0,
 		IdleTimeout:  time.Second * 60,
-		Handler:      r, // Pass our instance of gorilla/mux in.
+        // Important Note: If you aren't using gorilla/mux, you need to wrap your handlers with 
+        // context.ClearHandler as or else you will leak memory! An easy way to do this is to 
+        // wrap the top-level mux when calling http.ListenAndServe:
+		Handler:      context.ClearHandler(r), // Pass our instance of gorilla/mux in.
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
