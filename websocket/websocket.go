@@ -84,7 +84,7 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	      // logging.Debug("to write ping")
 	      if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
 	          logging.Debug("ping err: ", err)
-	          // conn.closing <- true
+	          conn.closing <- true
 	      }
 	  }, pingPeriod, conn.closing)
 
