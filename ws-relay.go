@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"io"
 	"net/http"
 	"net/http/pprof"
 	"os"
