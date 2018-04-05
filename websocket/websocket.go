@@ -35,7 +35,7 @@ type websocketTransport struct {
 }
 
 const (
-	writeWait        = 5 * time.Second    // Time allowed to write a message to the peer.
+	writeWait        = 5 * time.Second     // Time allowed to write a message to the peer.
 	pongWait         = 30 * time.Second    // Time allowed to read the next pong message from the peer.
 	pingPeriod       = (pongWait * 9) / 10 // Send pings to peer with this period. Must be less than pongWait.
 	closeGracePeriod = 10 * time.Second    // Time to wait before force close on connection.
@@ -44,8 +44,8 @@ const (
 // The default upgrader to use
 var upgrader = &websocket.Upgrader{
 	ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 // TryUpgrade attempts to upgrade an HTTP request to mqtt over websocket.
@@ -67,7 +67,6 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 		socket:  ws,
 		closing: make(chan bool, 1),
 	}
-
 
 	// ws.SetCloseHandler(func(code int, text string) (err error) {
 	// 	conn.closing <- true

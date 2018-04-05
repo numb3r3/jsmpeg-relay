@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"time"
 
+	gctx "github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/numb3r3/jsmpeg-relay/log"
 	"github.com/numb3r3/jsmpeg-relay/pubsub"
@@ -129,11 +130,11 @@ func main() {
 	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-    // Manually add support for paths linked to by index page at /debug/pprof/
-    r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-    r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-    r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-    r.Handle("/debug/pprof/block", pprof.Handler("block"))
+	// Manually add support for paths linked to by index page at /debug/pprof/
+	r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.Handle("/debug/pprof/block", pprof.Handler("block"))
 
 	srv := &http.Server{
 		Addr: *listenAddr,
@@ -141,10 +142,10 @@ func main() {
 		WriteTimeout: time.Second * 0,
 		ReadTimeout:  time.Second * 0,
 		IdleTimeout:  time.Second * 60,
-        // Important Note: If you aren't using gorilla/mux, you need to wrap your handlers with 
-        // context.ClearHandler as or else you will leak memory! An easy way to do this is to 
-        // wrap the top-level mux when calling http.ListenAndServe:
-		Handler:      context.ClearHandler(r), // Pass our instance of gorilla/mux in.
+		// Important Note: If you aren't using gorilla/mux, you need to wrap your handlers with
+		// context.ClearHandler as or else you will leak memory! An easy way to do this is to
+		// wrap the top-level mux when calling http.ListenAndServe:
+		Handler: gctx.ClearHandler(r), // Pass our instance of gorilla/mux in.
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
