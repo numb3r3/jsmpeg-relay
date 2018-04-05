@@ -36,7 +36,7 @@ func (b *Broker) Attach() (*Subscriber, error) {
 
 	s := &Subscriber{
 		id:        hex.EncodeToString(id),
-		messages:  make(chan *Message),
+		messages:  make(chan *Message, 1),
 		createAt:  time.Now().UnixNano(),
 		destroyed: false,
 		lock:      &sync.RWMutex{},
