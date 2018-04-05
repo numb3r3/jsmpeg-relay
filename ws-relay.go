@@ -41,8 +41,8 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 				// logging.Info("broadcast stream")
 				broker.Broadcast(buf, appName+"/"+streamKey)
 			}
-            
 		}
+        buf = nil
 	}
 	defer r.Body.Close()
 	w.WriteHeader(200)
