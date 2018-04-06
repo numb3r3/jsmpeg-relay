@@ -85,6 +85,7 @@ func (b *Broker) Unsubscribe(s *Subscriber, topics ...string) {
 func (b *Broker) Broadcast(data []byte, topics ...string) {
 	// b.tlock.RLock()
 	// defer b.tlock.RUnlock()
+    now := time.Now().UnixNano()
 	for _, topic := range topics {
 		if nil == b.topics[topic] {
 			continue
@@ -92,7 +93,7 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
         m := &Message{
             topic:    topic,
             data:     data,
-            createAt: time.Now().UnixNano(),
+            createAt: now,
         }
 		for _, s := range b.topics[topic] {
 			go (func(s *Subscriber) {
