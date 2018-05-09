@@ -9,6 +9,7 @@ $ go get github.com/numb3r3/jsmpeg-relay
 
 ### References
 
+- [Memory Leaking](https://lingchao.xin/post/memory-leaking.html)
 - [Go channels at horizontal scale (powered by message queues)](https://github.com/matryer/vice)
 
 

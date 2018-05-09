@@ -83,8 +83,8 @@ func (b *Broker) Unsubscribe(s *Subscriber, topics ...string) {
 
 // broadcast the specific payload to all the topic(s) subscribers
 func (b *Broker) Broadcast(data []byte, topics ...string) {
-	b.tlock.RLock()
-	defer b.tlock.RUnlock()
+	// b.tlock.RLock()
+	// defer b.tlock.RUnlock()
     now := time.Now().UnixNano()
 	for _, topic := range topics {
 		if nil == b.topics[topic] {
