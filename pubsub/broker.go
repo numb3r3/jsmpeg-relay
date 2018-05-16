@@ -39,9 +39,9 @@ func (b *Broker) Attach() (*Subscriber, error) {
 		messages:  make(chan *Message, 1),
 		createAt:  time.Now().UnixNano(),
 		destroyed: false,
-		lock:      &sync.RWMutex{},
-		topics:    map[string]bool{},
-		closing:   make(chan bool, 1),
+		//lock:      &sync.RWMutex{},
+		topics:  map[string]bool{},
+		closing: make(chan bool, 1),
 	}
 	// b.subscribers[s.id] = s
 	return s, nil
@@ -85,16 +85,16 @@ func (b *Broker) Unsubscribe(s *Subscriber, topics ...string) {
 func (b *Broker) Broadcast(data []byte, topics ...string) {
 	b.tlock.RLock()
 	defer b.tlock.RUnlock()
-    now := time.Now().UnixNano()
+	now := time.Now().UnixNano()
 	for _, topic := range topics {
 		if nil == b.topics[topic] {
 			continue
 		}
-        m := &Message{
-            topic:    topic,
-            data:     data,
-            createAt: now,
-        }
+		m := &Message{
+			topic:    topic,
+			data:     data,
+			createAt: now,
+		}
 		for _, s := range b.topics[topic] {
 			go (func(s *Subscriber) {
 				s.Signal(m)

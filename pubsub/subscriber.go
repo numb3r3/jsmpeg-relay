@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"sync"
+//"sync"
 )
 
 type Subscribers map[string]*Subscriber
@@ -11,9 +11,9 @@ type Subscriber struct {
 	messages  chan *Message
 	createAt  int64
 	destroyed bool
-	lock      *sync.RWMutex
-	topics    map[string]bool
-	closing   chan bool
+	//lock      *sync.RWMutex
+	topics  map[string]bool
+	closing chan bool
 }
 
 // to get the subscriber id
@@ -37,22 +37,28 @@ func (s *Subscriber) GetMessages() <-chan *Message {
 
 // to send a message to subscriber
 func (s *Subscriber) Signal(m *Message) *Subscriber {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+	// s.lock.RLock()
+	// defer s.lock.RUnlock()
 	if !s.destroyed {
-		s.messages <- m
+		select {
+		case <-s.closing:
+			return s
+		default:
+			s.messages <- m
+		}
+		// s.messages <- m
 	}
 	return s
 }
 
 // to close the underlying channels/resources
 func (s *Subscriber) Destroy() {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	// s.lock.Lock()
+	// defer s.lock.Unlock()
 	if !s.destroyed {
 		s.destroyed = true
-		close(s.messages)
 		s.closing <- true
+		close(s.messages)
 		close(s.closing)
 	}
 }
