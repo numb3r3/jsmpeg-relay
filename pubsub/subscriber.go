@@ -39,15 +39,30 @@ func (s *Subscriber) GetMessages() <-chan *Message {
 func (s *Subscriber) Signal(m *Message) *Subscriber {
 	// s.lock.RLock()
 	// defer s.lock.RUnlock()
-	if !s.destroyed {
+
+OK:
+	for {
 		select {
 		case <-s.closing:
-			return s
+			break OK
+		case s.messages <- m:
+			break OK
 		default:
-			s.messages <- m
 		}
-		// s.messages <- m
+		if s.destroyed {
+			break
+		}
 	}
+
+	// if !s.destroyed {
+	// 	select {
+	// 	case <-s.closing:
+	// 		return s
+	// 	default:
+	// 		s.messages <- m
+	// 	}
+	// 	// s.messages <- m
+	// }
 	return s
 }
 
