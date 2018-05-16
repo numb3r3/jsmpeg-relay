@@ -58,7 +58,7 @@ func (s *Subscriber) Destroy() {
 	if !s.destroyed {
 		s.destroyed = true
 		s.closing <- true
-		close(s.messages)
+		// close(s.messages)
 		close(s.closing)
 	}
 }
