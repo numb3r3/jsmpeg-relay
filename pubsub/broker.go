@@ -97,7 +97,13 @@ func (b *Broker) Broadcast(data []byte, topics ...string) {
 		}
 		for _, s := range b.topics[topic] {
 			go (func(s *Subscriber) {
-				s.Signal(m)
+				select {
+				case <-s.Closing():
+					return
+				default:
+					s.Signal(m)
+				}
+				//s.Signal(m)
 			})(s)
 
 			// s.Signal(m)

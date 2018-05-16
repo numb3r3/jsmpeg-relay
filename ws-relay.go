@@ -28,7 +28,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		logging.Debugf("publishing stream %v / %v from %v", appName, streamKey, r.RemoteAddr)
 
-		buf := make([]byte, 10*1024)
+		buf := make([]byte, 1024*1024)
 		for {
 			n, err := r.Body.Read(buf)
 			if err != nil {
