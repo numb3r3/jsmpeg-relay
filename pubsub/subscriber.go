@@ -39,6 +39,12 @@ func (s *Subscriber) GetMessages() <-chan *Message {
 func (s *Subscriber) Signal(m *Message) *Subscriber {
 	// s.lock.RLock()
 	// defer s.lock.RUnlock()
+	defer func() {
+		// recoverint from panic caused by writing to a closed channel
+		if recover() == nil {
+			return
+		}
+	}()
 
 OK:
 	for {
