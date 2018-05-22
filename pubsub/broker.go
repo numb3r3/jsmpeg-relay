@@ -51,8 +51,8 @@ func (b *Broker) Attach() (*Subscriber, error) {
 func (b *Broker) Detach(s *Subscriber) {
 	b.slock.Lock()
 	defer b.slock.Unlock()
-	s.Destroy()
 	b.Unsubscribe(s, s.GetTopics()...)
+	s.Destroy()
 }
 
 // subscribes the specific subscriber "s" to the specific list of topic(s)
