@@ -81,6 +81,12 @@ func newWebsocketConn(ws websocketConn) *websocketTransport {
 	ws.SetReadDeadline(time.Now().Add(pongWait))
 	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	utils.Repeat(func() {
+		defer func() {
+			// recoverint from panic caused by writing to a closed channel
+			if recover() == nil {
+				return
+			}
+		}()
 		// logging.Debug("to write ping")
 		if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
 			logging.Debug("ping err: ", err)
